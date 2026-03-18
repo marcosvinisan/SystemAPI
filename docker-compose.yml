@@ -1,0 +1,59 @@
+services:
+
+  db:
+    image: mysql:8.0
+    container_name: banksystem-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootsecret}
+      MYSQL_DATABASE: ${DB_NAME:-banksystem}
+      MYSQL_USER: ${DB_USER:-bankuser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-bankpass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./src/main/resources/db/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-rootsecret}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - banknet
+
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: banksystem-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${DB_NAME:-banksystem}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Sao_Paulo
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-bankuser}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-bankpass}
+
+      JWT_SECRET: ${JWT_SECRET:-mude-este-secret-em-producao-use-256bits}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-900000}
+
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8080:8080"
+    networks:
+      - banknet
+
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  banknet:
+    driver: bridge
