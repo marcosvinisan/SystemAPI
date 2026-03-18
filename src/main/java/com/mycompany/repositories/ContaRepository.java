@@ -46,7 +46,8 @@ public class ContaRepository {
             query.setLong(1, usuario.getCpf());
             query.setInt(2, tipoConta);
             query.executeUpdate();
-            
+
+
             
             ResultSet chavesGeradas = query.getGeneratedKeys();
             while(chavesGeradas.next()){
