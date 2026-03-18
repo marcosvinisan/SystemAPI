@@ -28,7 +28,8 @@ public class ConexaoDB {
         this.porta = "3306";
         this.banco = "mysql";
     }
-    
+
+
     /**
      * Realiza a conexão com o banco.
      * @return [Connection] ou [null] caso a conexão não tenha sido realizada.
